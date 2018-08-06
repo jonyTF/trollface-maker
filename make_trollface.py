@@ -47,7 +47,7 @@ def get_trollface_landmarks(mouthOpen):
 
     parts = []
     for part in image.iter('part'):
-        parts.append((int(part.attrib['x']), int(part.attrib['y'])))
+        parts.append( (int(part.attrib['x']), int(part.attrib['y'])) )
 
     return parts
 
@@ -150,30 +150,20 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
     # Copy triangular region of the rectangular patch to the output image
     img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] = img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] * ( 1 - mask ) + imgRect * mask
 
-if __name__ == '__main__':
-    ap = argparse.ArgumentParser()
-    #ap.add_argument('-p', '--shape-predictor', required=False, help='path to facial landmark predictor')
-    #ap.add_argument('-i', '--image', required=False, help='path to input image')
-    #args = vars(ap.parse_args())
-
-    (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
-    if int(major_ver) < 3:
-        print('ERROR: Script needs OpenCV 3.0 or higher')
-        sys.exit(1)
-
-    if len(sys.argv) < 2:
-        print('ERROR: Need to supply image parameter\nEx: python main.py IMAGE')
-        sys.exit(1)
-
+def make_trollface(img_import_path, img_export_path):
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('./data/shape_predictor_68_face_landmarks.dat')
 
-    image = cv2.imread(sys.argv[1])
+    image = cv2.imread(img_import_path)
     image = imutils.resize(image)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
-    trollface_image = cv2.imread('img/TrollFace_s.jpg')
+    trollface_image = cv2.imread('data/TrollFace_s.jpg')
     trollface_image = cv2.cvtColor(trollface_image, cv2.COLOR_BGR2BGRA)
+    
+    # Copy the image and add an alpha channel
     output_image = image.copy()
+    #output_image = cv2.cvtColor(output_image, cv2.COLOR_BGR2BGRA)
+
     
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     rects = detector(gray, 1)
@@ -199,6 +189,9 @@ if __name__ == '__main__':
         # Display face with open mouth if mouth opening is greater than 5
         diff = abs(points[66][1]-points[62][1])
         trollface_points = get_trollface_landmarks(True if diff > 5 else False)
+
+        # Flip face if facing left
+        flip = True if abs(points[0][0]-points[27][0]) < abs(points[16][0]-points[27][0]) else False
 
         # Delaunay triangulation
         tris = calculateDelaunayTriangles(image, points)
@@ -226,11 +219,14 @@ if __name__ == '__main__':
 
         # Put the trollface onto the original image
         image_morph_uint8 = np.uint8(image_morph)
+        if flip: 
+            image_morph_uint8 = np.fliplr(image_morph_uint8)
+        
 
-        face_height_fact = 1.25
-        face_height = int((face_height_fact+.25) * get_dist( (points[27][0], get_min_point(points, 1)[1]), points[8] ))
-        face_width_fact = 1.25
-        face_width = int((face_width_fact+.25) * get_dist(points[0], points[16]))
+        face_height_fact = 1.5
+        face_height = int((face_height_fact) * get_dist( (points[27][0], get_min_point(points, 1)[1]), points[8] ))
+        face_width_fact = 1.5
+        face_width = int((face_width_fact) * get_dist(points[0], points[16]))
         image_morph_uint8 = cv2.resize(image_morph_uint8, (face_width, face_height))
         image_morph_uint8 = imutils.rotate_bound(image_morph_uint8, get_face_angle(points))
 
@@ -238,6 +234,13 @@ if __name__ == '__main__':
         y1 = int(points[30][1] - image_morph_uint8.shape[0]/2)
         x2 = x1 + image_morph_uint8.shape[1]
         y2 = y1 + image_morph_uint8.shape[0]
+
+        # Seamless clone
+        #mask = image_morph_uint8[:,:,3]
+        #image_morph_uint8 = cv2.cvtColor(image_morph_uint8, cv2.COLOR_BGRA2BGR)
+        #output_image = cv2.cvtColor(output_image, cv2.COLOR_BGRA2BGR)
+        #center = (int(x1+image_morph_uint8.shape[1]/2), int(y1+image_morph_uint8.shape[0]/2))
+        #output_image = cv2.seamlessClone(image_morph_uint8, output_image, mask, center, cv2.NORMAL_CLONE)
 
         # Fix x and y values if out of range
         t_x1 = 0
@@ -268,11 +271,28 @@ if __name__ == '__main__':
         for c in range(3):
             output_image[y1:y2, x1:x2, c] = alpha_m[t_y1:t_y2, t_x1:t_x2] * image_morph_uint8[t_y1:t_y2, t_x1:t_x2, c] + alpha_o[t_y1:t_y2, t_x1:t_x2] * output_image[y1:y2, x1:x2, c]
 
-    img_path = 'img/output.jpg'
+    img_path = img_export_path
     cv2.imwrite(img_path, output_image)
-    print('{"img_path": "%s"}' % (img_path))
+    print('{"trollface_count": "%s"}' % (len(landmarks)))
     #output_image = imutils.resize(output_image, width=800)
     #cv2.imshow('Output', output_image)
     #cv2.imshow('Original', imutils.resize(np.uint8(image), width=800))
     #cv2.waitKey(0)
     
+
+if __name__ == '__main__':
+    ap = argparse.ArgumentParser()
+    #ap.add_argument('-p', '--shape-predictor', required=False, help='path to facial landmark predictor')
+    #ap.add_argument('-i', '--image', required=False, help='path to input image')
+    #args = vars(ap.parse_args())
+
+    (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
+    if int(major_ver) < 3:
+        print('ERROR: Script needs OpenCV 3.0 or higher')
+        sys.exit(1)
+
+    if len(sys.argv) < 3:
+        print('ERROR: Need to supply image parameters\nEx: python main.py IMAGE_PATH OUTPUT_PATH')
+        sys.exit(1)
+
+    make_trollface(sys.argv[1], sys.argv[2])
