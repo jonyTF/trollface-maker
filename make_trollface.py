@@ -65,6 +65,29 @@ def get_face_angle(points):
 
     return angle
 
+def flip_landmarks(points, img):
+    new_points = []
+    new_points = [(img.shape[1]-p[0], p[1]) for p in points]
+
+    swap = (
+        (0, 16), (1, 15), (2, 14), (3, 13), (4, 12), (5, 11), (6, 10), (7, 9), #outer face
+        (17, 26), (18, 25), (19, 24), (20, 23), (21, 22), #eyebrows
+        (36, 45), (37, 44), (38, 43), (39, 42), #upper eyelid
+        (40, 47), (41, 46), #lower eyelid
+        (31, 35), (32, 34), #nose
+        (48, 54), (49, 53), (50, 52), #upper outer lip
+        (55, 59), (56, 58), #lower outer lip
+        (60, 64), (61, 63), #upper inner lip
+        (65, 67) #lower inner lip
+    )
+
+    for (p1,p2) in swap:
+        temp = new_points[p1]
+        new_points[p1] = new_points[p2]
+        new_points[p2] = temp
+
+    return new_points
+
 def calculateDelaunayTriangles(img, points):
     size = img.shape
     rect = (0, 0, size[1], size[0])
@@ -171,8 +194,6 @@ def make_trollface(img_import_path, img_export_path):
     image = np.float32(image)
     trollface_image = np.float32(trollface_image)
 
-    image_morph = np.zeros((trollface_image.shape[0], trollface_image.shape[1], 4), dtype=trollface_image.dtype)
-
     landmarks = []
     for (i, rect) in enumerate(rects):
         #cv2.rectangle(output_image, (rect.left(), rect.top()), (rect.right(), rect.bottom()), (255, 0, 0))
@@ -186,19 +207,27 @@ def make_trollface(img_import_path, img_export_path):
             cv2.circle(image, (x, y), 1, (0, 0, 255), -1)'''
     
     for (i, points) in enumerate(landmarks):
+        # Clear image_morph
+        image_morph = np.zeros((trollface_image.shape[0], trollface_image.shape[1], 4), dtype=trollface_image.dtype)
+
         # Display face with open mouth if mouth opening is greater than 5
-        diff = abs(points[66][1]-points[62][1])
+        diff = get_dist(points[66],points[62])
         trollface_points = get_trollface_landmarks(True if diff > 5 else False)
 
         # Flip face if facing left
-        flip = True if abs(points[0][0]-points[27][0]) < abs(points[16][0]-points[27][0]) else False
+        flip = True if get_dist(points[0],points[27]) < get_dist(points[16],points[27]) else False
+        if flip:
+            trollface_points = flip_landmarks(trollface_points, trollface_image)
+            trollface_image_flip = np.fliplr(trollface_image)
+        else:
+            trollface_image_flip = trollface_image
 
         # Delaunay triangulation
-        tris = calculateDelaunayTriangles(image, points)
-        trollface_tris = calculateDelaunayTriangles(trollface_image, trollface_points)
+        # tris = calculateDelaunayTriangles(image, points)
+        # trollface_tris = calculateDelaunayTriangles(trollface_image_flip, trollface_points)
 
-        #drawDelaunayTriangles(trollface_image, trollface_tris, 'trolol', wait=False)
-        #drawDelaunayTriangles(image, tris, 'image', wait=False)
+        #drawDelaunayTriangles(np.uint8(trollface_image_flip), trollface_tris, 'trolol', wait=False)
+        #drawDelaunayTriangles(image, tris, 'image', wait=True)
         
         with open('data/tri.txt') as file:
             for line in file:
@@ -211,7 +240,7 @@ def make_trollface(img_import_path, img_export_path):
                 if x < 68 and y < 68 and z < 68 and rect_contains(r, points[x]) and rect_contains(r, points[y]) and rect_contains(r, points[z]):
                     t1 = [points[x], points[y], points[z]]
                     t2 = [trollface_points[x], trollface_points[y], trollface_points[z]]
-                    morphTriangle(image, trollface_image, image_morph, t1, t2, t2, 0)
+                    morphTriangle(image, trollface_image_flip, image_morph, t1, t2, t2, 0)
 
         #cv2.imshow('Output', np.uint8(image_morph))
         #cv2.waitKey(0)
@@ -219,8 +248,8 @@ def make_trollface(img_import_path, img_export_path):
 
         # Put the trollface onto the original image
         image_morph_uint8 = np.uint8(image_morph)
-        if flip: 
-            image_morph_uint8 = np.fliplr(image_morph_uint8)
+        #if flip: 
+        #    image_morph_uint8 = np.fliplr(image_morph_uint8)
         
 
         face_height_fact = 1.5
