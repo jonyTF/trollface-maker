@@ -4,9 +4,37 @@
     </head>
 
     <body>
-        <form action="make_trollface" method="post" enctype="multipart/form-data">
-            <input type="file" name="filetoupload" /><br>
-            <input type="submit" />
+        <form id="upload" action="javascript:void(0);" method="post" enctype="multipart/form-data">
+            <input id="filetoupload" type="file" name="filetoupload" /><br>
+            <input id="submitBtn" type="submit" />
         </form>
+
+        <p id="display"></p>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script>
+            $('#upload').submit(function() {
+                console.log('lel');
+                $('#submitBtn').attr('disabled', 'disabled');
+
+                var data = new FormData();
+                var file = $('#filetoupload')[0].files[0];
+                data.append('pic', file);
+                
+                jQuery.ajax({
+                    url: '../make_trollface',
+                    data: data,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    method: 'POST',
+                    success: function(data) {
+                        window.location = '/img/' + data + '.jpg';
+                        //console.log(data);
+                        //$('#display').html(data);
+                    }
+                });
+            });
+        </script>
     </body>
 </html>
