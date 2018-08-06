@@ -250,6 +250,12 @@ def make_trollface(img_import_path, img_export_path):
         image_morph_uint8 = np.uint8(image_morph)
         #if flip: 
         #    image_morph_uint8 = np.fliplr(image_morph_uint8)
+
+        # Feather edges
+        #alpha = cv2.GaussianBlur(image_morph_uint8[:, :, 3], (55, 55), 0)
+        trollface_mask = cv2.imread('data/TrollFace_mask2.jpg', cv2.IMREAD_GRAYSCALE)
+        if flip: trollface_mask = np.fliplr(trollface_mask)
+        image_morph_uint8[:, :, 3] = trollface_mask
         
 
         face_height_fact = 1.5
