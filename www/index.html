@@ -20,19 +20,14 @@
                 var data = new FormData();
                 var file = $('#filetoupload')[0].files[0];
                 data.append('pic', file);
-                
-                jQuery.ajax({
-                    url: '../make_trollface',
-                    data: data,
-                    cache: false,
-                    contentType: false,
-                    processData: false,
+
+                fetch('../make_trollface', {
                     method: 'POST',
-                    success: function(data) {
-                        window.location = '/img/' + data + '.jpg';
-                        //console.log(data);
-                        //$('#display').html(data);
-                    }
+                    body: data
+                })
+                .then((response) => {return response.json()})
+                .then((data) => {
+                    window.location = '/img/' + data.filename + '.jpg';
                 });
             });
         </script>
