@@ -6,6 +6,12 @@ const multer = require('multer');
 const upload = multer({ dest: 'img/' });
 const FileCleaner = require('cron-file-cleaner').FileCleaner;
 
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});  
+
 app.get('/', function(req, res) {
     res.sendFile(__dirname + '/www/index.html');
 });
