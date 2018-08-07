@@ -38,7 +38,7 @@ app.post('/make_trollface', upload.single('pic'), function(req, res, next) {
 app.use('/img', express.static(__dirname+'/img'));
 
 // Delete all files older than an hour
-var fileWatcher = new FileCleaner(__dirname+'/img/', 60000, '*/30 * * * * *', {
+var fileWatcher = new FileCleaner(__dirname+'/img/', 3600000, '* */15 * * * *', {
     start: true,
     blacklist: '/\.init/'
 });
