@@ -203,16 +203,18 @@ def make_trollface(img_import_path, img_export_path):
         shape = face_utils.shape_to_np(shape)
         landmarks.append(list(map(tuple,shape)))
 
-        '''for (x, y) in shape:
-            cv2.circle(image, (x, y), 1, (0, 0, 255), -1)'''
+        #for (x, y) in shape:
+        #    cv2.circle(image, (x, y), 1, (0, 0, 255), -1)
     
     for (i, points) in enumerate(landmarks):
         # Clear image_morph
         image_morph = np.zeros((trollface_image.shape[0], trollface_image.shape[1], 4), dtype=trollface_image.dtype)
 
-        # Display face with open mouth if mouth opening is greater than 5
-        diff = get_dist(points[66],points[62])
-        trollface_points = get_trollface_landmarks(True if diff > 5 else False)
+        # Display face with open mouth if mouth opening is greater than 20% of mouth
+        mouth_opening_height = get_dist(points[66],points[62])
+        mouth_height = get_dist(points[51], points[57])
+        mouth_opening_ratio = mouth_opening_height/mouth_height
+        trollface_points = get_trollface_landmarks(True if mouth_opening_ratio > .2 else False)
 
         # Flip face if facing left
         flip = True if get_dist(points[0],points[27]) < get_dist(points[16],points[27]) else False
