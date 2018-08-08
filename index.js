@@ -32,7 +32,7 @@ app.post('/make_trollface', upload.single('pic'), function(req, res, next) {
         console.log('Trollface_count: ', results[0].trollface_count)
         console.log('Done processing file!')
         //res.contentType('image/jpeg');
-        res.write(JSON.stringify({'filename': file.filename}));
+        res.write(JSON.stringify({'filename': file.filename + '.jpg'}));
         res.end();
         /*fs.unlink(newpath, function(err) {
             if (err) throw err;
