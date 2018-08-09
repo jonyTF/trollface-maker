@@ -27,7 +27,7 @@
                 })
                 .then((response) => {return response.json()})
                 .then((data) => {
-                    window.location = '/img/' + data.filename + '.jpg';
+                    window.location = '/img/' + data.filename;
                 });
             });
         </script>
