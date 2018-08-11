@@ -84,6 +84,43 @@ def scale_rotate_point_with_image(point, img, size, angle):
 
     return orig_point
 
+def put_image_alpha(src, output, x, y):
+    # Puts image src onto output at (x, y) using the image's alpha channels
+
+    x1 = x 
+    y1 = y
+    x2 = x + src.shape[1]
+    y2 = y + src.shape[0]
+
+    # Fix x and y values if out of range
+    s_x1 = 0
+    s_y1 = 0
+    s_x2 = src.shape[1]
+    s_y2 = src.shape[0]
+    
+    if x1 < 0:
+        s_x1 = x1*-1 # Only start drawing trollface x1*-1 pixels over from the start
+        x1 = 0
+    
+    if x2 > output.shape[1]:
+        s_x2 -= x2-output.shape[1]
+        x2 = output.shape[1]
+
+    if y1 < 0:
+        s_y1 = y1*-1 # Only start drawing trollface y1*-1 pixels over from the start
+        y1 = 0
+    
+    if y2 > output.shape[0]:
+        s_y2 -= y2-output.shape[0]
+        y2 = output.shape[0]
+
+
+    alpha_m = src[:, :, 3] / 255.0
+    alpha_o = 1.0 - alpha_m
+    
+    for c in range(3):
+        output[y1:y2, x1:x2, c] = alpha_m[s_y1:s_y2, s_x1:s_x2] * src[s_y1:s_y2, s_x1:s_x2, c] + alpha_o[s_y1:s_y2, s_x1:s_x2] * output[y1:y2, x1:x2, c]
+
 
 '''
 def rotate_point_with_image(point, img, angle):
@@ -219,6 +256,7 @@ def make_trollface(img_import_path, img_export_path):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
     trollface_image = cv2.imread('data/TrollFace_s.jpg')
     trollface_image = cv2.cvtColor(trollface_image, cv2.COLOR_BGR2BGRA)
+    #wrinkle_image = cv2.imread('data/wrinkle.png', cv2.IMREAD_UNCHANGED)
     
     # Copy the image and add an alpha channel
     output_image = image.copy()
@@ -233,7 +271,6 @@ def make_trollface(img_import_path, img_export_path):
 
     image = np.float32(image)
     trollface_image = np.float32(trollface_image)
-
 
     start = time.time()
     landmarks = []
@@ -312,53 +349,27 @@ def make_trollface(img_import_path, img_export_path):
         # Get the angle to rotate trollface to fit the angle of target face
         face_angle = get_face_angle(points)
         
-        # Perform the actual scaling and rotation on the trollface image and 27th point
+        # Perform the actual scaling and rotation on the trollface image and 27th point and wrinkle
         transformed_point = scale_rotate_point_with_image(trollface_points[27], image_morph_uint8, (face_width, face_height), face_angle)
         image_morph_uint8 = cv2.resize(image_morph_uint8, (face_width, face_height))
         image_morph_uint8 = imutils.rotate_bound(image_morph_uint8, face_angle)
+        #wrinkle_image = cv2.resize(wrinkle_image, (int(0.6*face_width), int(0.2*face_height)))
+        #wrinkle_image = imutils.rotate_bound(wrinkle_image, face_angle)
 
         # Get x and y coordinates to place morphed trollface image
-        x1 = points[27][0] - transformed_point[0]
-        y1 = points[27][1] - transformed_point[1]
-        x2 = x1 + image_morph_uint8.shape[1]
-        y2 = y1 + image_morph_uint8.shape[0]
+        x = points[27][0] - transformed_point[0]
+        y = points[27][1] - transformed_point[1]
 
-        # Seamless clone
-        #mask = image_morph_uint8[:,:,3]
+        # Seamless clone wrinkle on
+        #mask = 255*np.ones(wrinkle_image.shape, dtype=wrinkle_image.dtype)
         #image_morph_uint8 = cv2.cvtColor(image_morph_uint8, cv2.COLOR_BGRA2BGR)
         #output_image = cv2.cvtColor(output_image, cv2.COLOR_BGRA2BGR)
-        #center = (int(x1+image_morph_uint8.shape[1]/2), int(y1+image_morph_uint8.shape[0]/2))
-        #output_image = cv2.seamlessClone(image_morph_uint8, output_image, mask, center, cv2.NORMAL_CLONE)
+        #center = (int(x1+image_morph_uint8.shape[1]/2), int(y1))
+        #output_image = cv2.seamlessClone(wrinkle_image, output_image, mask, center, cv2.MIXED_CLONE)
 
-        # Fix x and y values if out of range
-        t_x1 = 0
-        t_y1 = 0
-        t_x2 = image_morph_uint8.shape[1]
-        t_y2 = image_morph_uint8.shape[0]
+        put_image_alpha(image_morph_uint8, output_image, x, y)
+        #put_image_alpha(wrinkle_image, output_image, int(x+wrinkle_image.shape[1]*.4), int(y-wrinkle_image.shape[0]/2))
         
-        if x1 < 0:
-            t_x1 = x1*-1 # Only start drawing trollface x1*-1 pixels over from the start
-            x1 = 0
-        
-        if x2 > output_image.shape[1]:
-            t_x2 -= x2-output_image.shape[1]
-            x2 = output_image.shape[1]
-
-        if y1 < 0:
-            t_y1 = y1*-1 # Only start drawing trollface y1*-1 pixels over from the start
-            y1 = 0
-        
-        if y2 > output_image.shape[0]:
-            t_y2 -= y2-output_image.shape[0]
-            y2 = output_image.shape[0]
-
-
-        alpha_m = image_morph_uint8[:, :, 3] / 255.0
-        alpha_o = 1.0 - alpha_m
-        
-        for c in range(3):
-            output_image[y1:y2, x1:x2, c] = alpha_m[t_y1:t_y2, t_x1:t_x2] * image_morph_uint8[t_y1:t_y2, t_x1:t_x2, c] + alpha_o[t_y1:t_y2, t_x1:t_x2] * output_image[y1:y2, x1:x2, c]
-
     img_path = img_export_path
     cv2.imwrite(img_path, output_image)
     print('{"trollface_count": "%s"}' % (len(landmarks)))
