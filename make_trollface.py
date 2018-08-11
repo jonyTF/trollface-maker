@@ -7,6 +7,7 @@ import imutils
 from imutils import face_utils
 import xml.etree.ElementTree as ET
 import math
+import time
 
 # Check if a point is inside a rectangle
 def rect_contains(rect, point):
@@ -49,7 +50,7 @@ def get_trollface_landmarks(mouthOpen):
     for part in image.iter('part'):
         parts.append( (int(part.attrib['x']), int(part.attrib['y'])) )
 
-    return parts
+    return np.array(parts)
 
 def get_face_angle(points):
     p_top = points[27]
@@ -63,7 +64,43 @@ def get_face_angle(points):
     else:
         angle = 90 + angle
 
-    return angle
+    return int(angle)
+
+def scale_rotate_point_with_image(point, img, size, angle):
+    img_h, img_w = img.shape[0], img.shape[1]
+    w, h = size
+
+    # Scale point first
+    w_ratio = w / img_w
+    h_ratio = h / img_h
+    scaled_point = (int(point[0] * w_ratio), int(point[1] * h_ratio))
+
+    # Rotate the point by making it a point in an image, then use rotate_bound()
+    point_image = np.zeros((h, w, 1), dtype=img.dtype)
+    point_image[scaled_point[1], scaled_point[0], 0] = 255
+    point_image = imutils.rotate_bound(point_image, angle)
+    point_index = np.where(point_image > 0)
+    orig_point = (point_index[1][0], point_index[0][0])
+
+    return orig_point
+
+
+'''
+def rotate_point_with_image(point, img, angle):
+    # Rotates the point as if rotating an image with imutils.rotate_bound()
+    angle = math.radians(angle) # Don't need to multiply by -1 because coordinate system is different (y goes down)
+    h, w = img.shape
+
+    # Rotate point around center of image
+    ox = w/2
+    oy = h/2
+    px, py = point
+
+    qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
+    qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
+'''
+
+
 
 def flip_landmarks(points, img):
     new_points = []
@@ -189,11 +226,16 @@ def make_trollface(img_import_path, img_export_path):
 
     
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    start = time.time()
     rects = detector(gray, 1)
+    end = time.time()
+    #print('Detector time: ', end-start)
 
     image = np.float32(image)
     trollface_image = np.float32(trollface_image)
 
+
+    start = time.time()
     landmarks = []
     for (i, rect) in enumerate(rects):
         #cv2.rectangle(output_image, (rect.left(), rect.top()), (rect.right(), rect.bottom()), (255, 0, 0))
@@ -201,11 +243,16 @@ def make_trollface(img_import_path, img_export_path):
         shape = predictor(gray, rect)
 
         shape = face_utils.shape_to_np(shape)
-        landmarks.append(list(map(tuple,shape)))
+        #landmarks.append(list(map(tuple,shape)))
+        landmarks.append(shape)
 
         #for (x, y) in shape:
         #    cv2.circle(image, (x, y), 1, (0, 0, 255), -1)
     
+    landmarks = np.array(landmarks)
+    end = time.time()
+    #print("Landmark recog time: ", end-start)
+
     for (i, points) in enumerate(landmarks):
         # Clear image_morph
         image_morph = np.zeros((trollface_image.shape[0], trollface_image.shape[1], 4), dtype=trollface_image.dtype)
@@ -248,27 +295,31 @@ def make_trollface(img_import_path, img_export_path):
         #cv2.waitKey(0)
         #cv2.imwrite('img/o%d.png' % (i), np.uint8(image_morph))
 
-        # Put the trollface onto the original image
+        ## Put the trollface onto the original image
         image_morph_uint8 = np.uint8(image_morph)
-        #if flip: 
-        #    image_morph_uint8 = np.fliplr(image_morph_uint8)
 
         # Feather edges
-        #alpha = cv2.GaussianBlur(image_morph_uint8[:, :, 3], (55, 55), 0)
         trollface_mask = cv2.imread('data/TrollFace_mask2.jpg', cv2.IMREAD_GRAYSCALE)
         if flip: trollface_mask = np.fliplr(trollface_mask)
         image_morph_uint8[:, :, 3] = trollface_mask
         
-
-        face_height_fact = 1.5
-        face_height = int((face_height_fact) * get_dist( (points[27][0], get_min_point(points, 1)[1]), points[8] ))
+        # Set the size of trollface to cover the original face
+        face_height_fact = 1.25
+        face_height = int((face_height_fact) * (get_dist( points[27], points[8] ) + (image_morph_uint8.shape[0] - get_dist( trollface_points[27], trollface_points[8] ))  ) )
         face_width_fact = 1.5
         face_width = int((face_width_fact) * get_dist(points[0], points[16]))
-        image_morph_uint8 = cv2.resize(image_morph_uint8, (face_width, face_height))
-        image_morph_uint8 = imutils.rotate_bound(image_morph_uint8, get_face_angle(points))
 
-        x1 = int(get_avg_point(points[0], points[16])[0] - image_morph_uint8.shape[1]/2)
-        y1 = int(points[30][1] - image_morph_uint8.shape[0]/2)
+        # Get the angle to rotate trollface to fit the angle of target face
+        face_angle = get_face_angle(points)
+        
+        # Perform the actual scaling and rotation on the trollface image and 27th point
+        transformed_point = scale_rotate_point_with_image(trollface_points[27], image_morph_uint8, (face_width, face_height), face_angle)
+        image_morph_uint8 = cv2.resize(image_morph_uint8, (face_width, face_height))
+        image_morph_uint8 = imutils.rotate_bound(image_morph_uint8, face_angle)
+
+        # Get x and y coordinates to place morphed trollface image
+        x1 = points[27][0] - transformed_point[0]
+        y1 = points[27][1] - transformed_point[1]
         x2 = x1 + image_morph_uint8.shape[1]
         y2 = y1 + image_morph_uint8.shape[0]
 
@@ -332,4 +383,7 @@ if __name__ == '__main__':
         print('ERROR: Need to supply image parameters\nEx: python main.py IMAGE_PATH OUTPUT_PATH')
         sys.exit(1)
 
+    start = time.time()
     make_trollface(sys.argv[1], sys.argv[2])
+    end = time.time()
+    #print('Total Time: ', end-start)
