@@ -4,6 +4,6 @@ tree = ET.parse('data/trollface_landmarks.xml')
 root = tree.getroot()
 
 for p in root.iter('part'):
-    p.attrib['y'] = str(int(p.attrib['y']) - 52)
+    p.attrib['x'] = str(int(p.attrib['x']) + 1)
 
-tree.write('trollface_landmarks_newer.xml')
+tree.write('data/trollface_landmarks.xml')
