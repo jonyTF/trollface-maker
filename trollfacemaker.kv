@@ -1,20 +1,57 @@
 #:kivy 1.10.1
 
+#Color Pallete: http://www.color-hex.com/color-palette/65056
+
 <MainBtn@Button>:
-    padding: (0, 20)
+    background_normal: ''
+    background_color: (89/255,110/255,121/255,1)
+    background_down: 'img/button_down.jpg'
+    font_size: '20sp'
 
-<StartPage>:
-    anchor_x: 'center'
-    anchor_y: 'bottom'
-    padding: 20
+<Manager>:
+    StartScreen:
+        name: 'start'
 
-    BoxLayout:
-        orientation: 'vertical'
-        size_hint: (1, 0.3)
+<StartScreen>:
 
-        Button: 
-            text: 'Take a photo'
-        Button:
-            text: 'Choose a photo'
-        Button:
-            text: 'Gallery'
+
+    BackgroundImage:
+        allow_stretch: True
+        keep_ratio: False
+        source: self.get_image() 
+        size_hint: (None, None)
+        size: self.rescale(root.width, root.height)
+        pos: ((root.width-self.width)/2, (root.height-self.height)/2)
+
+    AnchorLayout:
+        anchor_x: 'center'
+        anchor_y: 'bottom'
+        padding: 20
+
+        
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: (None, None)
+            size: (200, 250)
+            spacing: 5
+
+            canvas:
+                Rectangle:
+                    pos: (root.x, root.y)
+                    size: (root.width, self.height+40)
+                    source: 'img/start_screen_gradient.png'
+
+            Image:
+                size_hint_x: 1
+                size_hint_y: None
+                source: 'img/logo.png'
+            MainBtn: 
+                text: 'Take a photo'
+                on_press: root.take_photo()
+            MainBtn:
+                text: 'Choose a photo'
+                on_press: root.choose_photo()
+            MainBtn:
+                text: 'Gallery'
+                on_press: root.open_gallery()
