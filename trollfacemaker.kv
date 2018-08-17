@@ -11,10 +11,10 @@
 <Manager>:
     StartScreen:
         name: 'start'
+    ChoosePhotoScreen:
+        name: 'choose_photo'
 
 <StartScreen>:
-
-
     BackgroundImage:
         allow_stretch: True
         keep_ratio: False
@@ -26,20 +26,20 @@
     AnchorLayout:
         anchor_x: 'center'
         anchor_y: 'bottom'
-        padding: 20
+        padding: dp(20)
 
         
 
         BoxLayout:
             orientation: 'vertical'
             size_hint: (None, None)
-            size: (200, 250)
-            spacing: 5
+            size: (dp(200), dp(250))
+            spacing: dp(5)
 
             canvas:
                 Rectangle:
                     pos: (root.x, root.y)
-                    size: (root.width, self.height+40)
+                    size: (root.width, self.height+dp(40))
                     source: 'img/start_screen_gradient.png'
 
             Image:
@@ -55,3 +55,5 @@
             MainBtn:
                 text: 'Gallery'
                 on_press: root.open_gallery()
+
+<ChoosePhotoScreen>:

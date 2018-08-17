@@ -14,6 +14,8 @@ dlib = "*"
 numpy = "*"
 imutils = "*"
 kivy = "*"
+"kivy.deps.gstreamer" = "*"
+plyer = "*"
 
 [dev-packages]
 

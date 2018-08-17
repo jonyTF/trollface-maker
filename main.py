@@ -69,6 +69,9 @@ class StartScreen(Screen):
     def open_gallery(self):
         print('Open the gallery!')
 
+class ChoosePhotoScreen(Screen):
+    pass
+
 class Manager(ScreenManager):
     pass
 
