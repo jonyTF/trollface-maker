@@ -1,13 +1,25 @@
+<!DOCTYPE html>
 <html>
     <head>
         <title>Trollface Maker</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-        <link rel="stylesheet" href="index.css">
+        <link rel="stylesheet" type="text/css" href="index.css">
+        <link rel="stylesheet" type="text/css" href="https://www.w3schools.com/w3css/4/w3.css">
     </head>
 
     <body>
-        <div class="w3-container">
+        <ul class="slideshow page" data-page-num="1">
+            <li>
+                <span>Image 1</span>
+            </li>
+            <li>
+                <span>Image 2</span>
+            </li>
+        </ul>
+
+
+
+        <div class="w3-container page" data-page-num="2">
             <form id="upload" action="javascript:void(0);" method="post" enctype="multipart/form-data">
                 <input id="filetoupload" type="file" name="filetoupload" /><br>
                 <input id="submitBtn" type="submit" />
@@ -19,6 +31,16 @@
 
         <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
         <script>
+            function setPage(num) {
+                var pages = $('.page');
+                var i;
+                for (i = 0; i < pages.length; i++) {
+                    if (parseInt($(pages[i]).attr('data-page-num')) != num) {
+                        $(pages[i]).hide();
+                    }
+                }
+            }
+
             $('#upload').submit(function() {
                 console.log('lel');
                 $('#submitBtn').attr('disabled', 'disabled');
@@ -36,6 +58,9 @@
                     window.location = '/img/' + data.filename;
                 });
             });
+
+            var page = 1;
+            setPage(page);
         </script>
     </body>
 </html>
