@@ -1,15 +1,21 @@
 <html>
     <head>
         <title>Trollface Maker</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        <link rel="stylesheet" href="index.css">
     </head>
 
     <body>
-        <form id="upload" action="javascript:void(0);" method="post" enctype="multipart/form-data">
-            <input id="filetoupload" type="file" name="filetoupload" /><br>
-            <input id="submitBtn" type="submit" />
-        </form>
+        <div class="w3-container">
+            <form id="upload" action="javascript:void(0);" method="post" enctype="multipart/form-data">
+                <input id="filetoupload" type="file" name="filetoupload" /><br>
+                <input id="submitBtn" type="submit" />
+            </form>
 
-        <p id="display"></p>
+            <p id="display"></p>
+        
+        </div>
 
         <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
         <script>
