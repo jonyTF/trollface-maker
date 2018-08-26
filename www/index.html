@@ -3,47 +3,49 @@
     <head>
         <title>Trollface Maker</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="index.css">
         <link rel="stylesheet" type="text/css" href="https://www.w3schools.com/w3css/4/w3.css">
+        <link href="https://fonts.googleapis.com/css?family=Indie+Flower|M+PLUS+1p" rel="stylesheet">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="index.css">
     </head>
 
     <body>
-        <ul class="slideshow page" data-page-num="1">
-            <li>
-                <span>Image 1</span>
-            </li>
-            <li>
-                <span>Image 2</span>
-            </li>
-        </ul>
+        <div id="home-page">
+            <ul class="slideshow">
+                <li>
+                    <span>Image 1</span>
+                </li>
+                <li>
+                    <span>Image 2</span>
+                </li>
+            </ul>
+            
+            <div id="page-1-btn-container">
+                <h1 class="logo-text"><strong>TROLLFACE</strong> MAKER</h1>
+                <a href="#upload-page" class="w3-btn w3-red w3-round-xlarge">Start</a>
+            </div>
+        </div>
 
 
-
-        <div class="w3-container page" data-page-num="2">
-            <form id="upload" action="javascript:void(0);" method="post" enctype="multipart/form-data">
-                <input id="filetoupload" type="file" name="filetoupload" /><br>
-                <input id="submitBtn" type="submit" />
-            </form>
-
-            <p id="display"></p>
-        
+        <div id="upload-page" class="page fadeinright">
+            <div class="step">
+                <form id="upload" class="w3-container w3-card-4 w3-light-grey w3-margin" action="javascript:void(0);" method="post" enctype="multipart/form-data">
+                    <h1 class="w3-center">Step <span class="w3-xxlarge w3-text-red">&#x2776;</span></h1>
+                    
+                    <input id="filetoupload" type="file" class="inputfile" name="filetoupload" />
+                    <label id="filetouploadlabel" for="filetoupload" class="w3-btn w3-red w3-block w3-section"><i class="fas fa-upload"></i> <span>Choose a picture</span></label>
+                    <input id="submitBtn" class="w3-btn w3-blue w3-block w3-section" type="submit" />
+                    
+                </form>
+                
+            </div>
         </div>
 
         <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
         <script>
-            function setPage(num) {
-                var pages = $('.page');
-                var i;
-                for (i = 0; i < pages.length; i++) {
-                    if (parseInt($(pages[i]).attr('data-page-num')) != num) {
-                        $(pages[i]).hide();
-                    }
-                }
-            }
-
             $('#upload').submit(function() {
                 console.log('lel');
-                $('#submitBtn').attr('disabled', 'disabled');
+                $('#submitBtn').prop('disabled', true);
 
                 var data = new FormData();
                 var file = $('#filetoupload')[0].files[0];
@@ -57,10 +59,44 @@
                 .then((data) => {
                     window.location = '/img/' + data.filename;
                 });
+
+                /*fetch('../is_processing_trollface', {
+                    method: 'POST',
+                })
+                .then((response) => {return response.json()})
+                .then((data) => {
+                    console.log(data);
+                });*/
             });
 
-            var page = 1;
-            setPage(page);
+            $('.inputfile').each(function() {
+                var $input	 = $( this ),
+                    $label	 = $input.next( 'label' ),
+                    labelVal = $label.html();
+
+                $input.on( 'change', function( e )
+                {   
+                    var fileName = '';
+
+                    if( e.target.value )
+                        fileName = e.target.value.split( '\\' ).pop();
+
+                    if( fileName ) {
+                        $label.find( 'span' ).html( fileName );
+                        $('#submitBtn').prop('disabled', false);
+                    } else {
+                        $label.html( labelVal );
+                        $('#submitBtn').prop('disabled', true);
+                    }
+                });
+
+                // Firefox bug fix
+                $input
+                .on( 'focus', function(){ $input.addClass( 'has-focus' ); })
+                .on( 'blur', function(){ $input.removeClass( 'has-focus' ); });
+            });
+
+            $('#submitBtn').prop('disabled', true);
         </script>
     </body>
 </html>

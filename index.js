@@ -6,6 +6,8 @@ const multer = require('multer');
 const upload = multer({ dest: 'img/' });
 const FileCleaner = require('cron-file-cleaner').FileCleaner;
 
+var processingFile = false;
+
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -18,6 +20,7 @@ app.get('/', function(req, res) {
 });
 
 app.post('/make_trollface', upload.single('pic'), function(req, res, next) {
+    processingFile = true;
     var file = req.file;
     var newpath = file.path+'.jpg';
     console.log(file);
@@ -35,11 +38,19 @@ app.post('/make_trollface', upload.single('pic'), function(req, res, next) {
         //res.contentType('image/jpeg');
         res.write(JSON.stringify({'filename': file.filename + '.jpg'}));
         res.end();
+
+        processingFile = false;
         /*fs.unlink(newpath, function(err) {
             if (err) throw err;
             console.log(newpath, 'was deleted');
         });*/
     });
+});
+
+app.post('/is_processing_trollface', function(req, res) {
+    console.log('isprocessing?!?');
+    res.write(JSON.stringify({'processingFile': processingFile}));
+    res.end();
 });
 
 app.use('/img', express.static(__dirname+'/img'));

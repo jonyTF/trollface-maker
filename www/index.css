@@ -1,5 +1,11 @@
 body {
     background-color: black;
+    font-family: 'M PLUS 1p', sans-serif;
+}
+
+h1.logo-text {
+    color: white;
+    font-family: 'Indie Flower', cursive;
 }
 
 ul {
@@ -17,7 +23,7 @@ ul {
     background-position: 50% 50%;
     background-repeat: none;
     opacity: 0;
-    z-index: 0;
+    z-index: -1;
     animation: imageAnimation 16s linear infinite 0s;
 }
 
@@ -41,4 +47,76 @@ ul {
 
 .no-cssanimations .slideshow li span{
 	opacity: 1;
+}
+
+.page {
+    width: 100%;
+    min-height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: #000;
+    margin-left: -102%;
+    z-index: 2;
+    -webkit-transition: all .6s ease-in-out;
+	-moz-transition: all .6s ease-in-out;
+	-o-transition: all .6s ease-in-out;
+	-ms-transition: all .6s ease-in-out;
+	transition: all .6s ease-in-out;
+}
+
+.page:target {
+    margin-left: 0%;
+}
+
+#upload-page:target {
+    background-color: #90C3D4;
+}
+
+#page-1-btn-container {
+    position: absolute;
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: 100%;
+}
+
+#page-1-btn-container h1 {
+    margin: 0;
+    padding: 0;
+    font-size: 3em;
+    text-shadow: 4px 4px 4px #222;
+}
+
+#page-1-btn-container a {
+    font-size: 1.5em;
+}
+
+#filetoupload {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+@media screen and (min-width: 600px) {
+    /* For tablets and desktops */
+    #page-1-btn-container h1 {
+        margin: 0;
+        padding: 0;
+        font-size: 5em;
+        text-shadow: 4px 4px 4px #555;
+    }
+
+    #page-1-btn-container a {
+        font-size: 2em;
+    }
+
+    .step {
+        margin: 0 auto;
+        width: 600px;
+    }
 }
