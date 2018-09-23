@@ -247,12 +247,17 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
     # Copy triangular region of the rectangular patch to the output image
     img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] = img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] * ( 1 - mask ) + imgRect * mask
 
-def make_trollface(img_import_path, img_export_path):
+def make_trollface(img_import_path, img_export_path, show_times=False):
+    start = time.time()
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('./data/shape_predictor_68_face_landmarks.dat')
-
+    end = time.time()
+    if show_times: print("beginning thing time: ", end-start)
+    
+    start = time.time()
     image = cv2.imread(img_import_path)
-    image = imutils.resize(image)
+    #image_orig_h, image_orig_w = image.shape[:2]
+    #image = imutils.resize(image, width=400)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
     trollface_image = cv2.imread('data/TrollFace_s.jpg')
     trollface_image = cv2.cvtColor(trollface_image, cv2.COLOR_BGR2BGRA)
@@ -261,13 +266,16 @@ def make_trollface(img_import_path, img_export_path):
     # Copy the image and add an alpha channel
     output_image = image.copy()
     #output_image = cv2.cvtColor(output_image, cv2.COLOR_BGR2BGRA)
-
     
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    end = time.time()
+    if show_times: print("Load image time: ", end-start)
+    
+
     start = time.time()
     rects = detector(gray, 1)
     end = time.time()
-    #print('Detector time: ', end-start)
+    if show_times: print('Detector time: ', end-start)
 
     image = np.float32(image)
     trollface_image = np.float32(trollface_image)
@@ -288,8 +296,9 @@ def make_trollface(img_import_path, img_export_path):
     
     landmarks = np.array(landmarks)
     end = time.time()
-    #print("Landmark recog time: ", end-start)
+    if show_times: print("Landmark recog time: ", end-start)
 
+    start = time.time()
     for (i, points) in enumerate(landmarks):
         # Clear image_morph
         image_morph = np.zeros((trollface_image.shape[0], trollface_image.shape[1], 4), dtype=trollface_image.dtype)
@@ -341,7 +350,7 @@ def make_trollface(img_import_path, img_export_path):
         image_morph_uint8[:, :, 3] = trollface_mask
         
         # Set the size of trollface to cover the original face
-        face_height_fact = 1.25
+        face_height_fact = 1
         face_height = int((face_height_fact) * (get_dist( points[27], points[8] ) + (image_morph_uint8.shape[0] - get_dist( trollface_points[27], trollface_points[8] ))  ) )
         face_width_fact = 1.5
         face_width = int((face_width_fact) * get_dist(points[0], points[16]))
@@ -369,6 +378,8 @@ def make_trollface(img_import_path, img_export_path):
 
         put_image_alpha(image_morph_uint8, output_image, x, y)
         #put_image_alpha(wrinkle_image, output_image, int(x+wrinkle_image.shape[1]*.4), int(y-wrinkle_image.shape[0]/2))
+    end = time.time()
+    if show_times: print("image morph time: ", end-start)
         
     img_path = img_export_path
     cv2.imwrite(img_path, output_image)
@@ -395,6 +406,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     start = time.time()
-    make_trollface(sys.argv[1], sys.argv[2])
+    show_times = False
+    make_trollface(sys.argv[1], sys.argv[2], show_times=show_times)
     end = time.time()
-    #print('Total Time: ', end-start)
+    if show_times: print('Total Time: ', end-start)
