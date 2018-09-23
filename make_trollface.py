@@ -350,7 +350,7 @@ def make_trollface(img_import_path, img_export_path, show_times=False):
         image_morph_uint8[:, :, 3] = trollface_mask
         
         # Set the size of trollface to cover the original face
-        face_height_fact = 1
+        face_height_fact = 1.25
         face_height = int((face_height_fact) * (get_dist( points[27], points[8] ) + (image_morph_uint8.shape[0] - get_dist( trollface_points[27], trollface_points[8] ))  ) )
         face_width_fact = 1.5
         face_width = int((face_width_fact) * get_dist(points[0], points[16]))
