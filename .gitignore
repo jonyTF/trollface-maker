@@ -3,3 +3,4 @@ bin/
 .vscode/
 tmp/
 img_test/
+cplusplus_version/build/

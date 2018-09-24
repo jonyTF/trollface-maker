@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+project( makeTrollface )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+add_executable( makeTrollface makeTrollface.cpp )
+target_link_libraries( makeTrollface ${OpenCV_LIBS} )
