@@ -8,6 +8,7 @@ from imutils import face_utils
 import xml.etree.ElementTree as ET
 import math
 import time
+import json
 
 # Check if a point is inside a rectangle
 def rect_contains(rect, point):
@@ -247,13 +248,7 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
     # Copy triangular region of the rectangular patch to the output image
     img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] = img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] * ( 1 - mask ) + imgRect * mask
 
-def make_trollface(img_import_path, img_export_path, show_times=False):
-    start = time.time()
-    detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor('./data/shape_predictor_68_face_landmarks.dat')
-    end = time.time()
-    if show_times: print("beginning thing time: ", end-start)
-    
+def make_trollface(img_import_path, img_export_path, detector, predictor, show_times=False):
     start = time.time()
     image = cv2.imread(img_import_path)
     #image_orig_h, image_orig_w = image.shape[:2]
@@ -385,15 +380,18 @@ def make_trollface(img_import_path, img_export_path, show_times=False):
         
     img_path = img_export_path
     cv2.imwrite(img_path, output_image)
-    print('{"trollface_count": "%s"}' % (len(landmarks)))
+    print_to_node('{"trollface_count": "%s"}' % (len(landmarks)))
     #output_image = imutils.resize(output_image, width=800)
     #cv2.imshow('Output', output_image)
     #cv2.imshow('Original', imutils.resize(np.uint8(image), width=800))
     #cv2.waitKey(0)
-    
+
+def print_to_node(s):
+    sys.stdout.write(s)
+    sys.stdout.flush()
 
 if __name__ == '__main__':
-    ap = argparse.ArgumentParser()
+    #ap = argparse.ArgumentParser()
     #ap.add_argument('-p', '--shape-predictor', required=False, help='path to facial landmark predictor')
     #ap.add_argument('-i', '--image', required=False, help='path to input image')
     #args = vars(ap.parse_args())
@@ -403,12 +401,19 @@ if __name__ == '__main__':
         print('ERROR: Script needs OpenCV 3.0 or higher')
         sys.exit(1)
 
-    if len(sys.argv) < 3:
-        print('ERROR: Need to supply image parameters\nEx: python main.py IMAGE_PATH OUTPUT_PATH')
-        sys.exit(1)
+    #if len(sys.argv) < 3:
+    #    print('ERROR: Need to supply image parameters\nEx: python main.py IMAGE_PATH OUTPUT_PATH')
+    #    sys.exit(1)
 
-    start = time.time()
-    show_times = False
-    make_trollface(sys.argv[1], sys.argv[2], show_times=show_times)
-    end = time.time()
-    if show_times: print('Total Time: ', end-start)
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor('./data/shape_predictor_68_face_landmarks.dat')
+
+    while True:
+        line = sys.stdin.readline()
+        if line != '':
+            args = json.loads(line)
+            start = time.time()
+            show_times = True
+            make_trollface(args[0], args[1], detector, predictor, show_times=show_times)
+            end = time.time()
+            if show_times: print_to_node('Total Time: %f' % (end-start))
